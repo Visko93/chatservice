@@ -1,12 +1,18 @@
 version: "2"
 sql:
-  - engine: "postgresql"
-    schema: "sql/migrations"
+  - schema: "sql/migrations"
     queries: "sql/queries"
+    engine: "postgresql"
     gen:
       go:
         package: "db"
         out: "internal/infra/db"
         overrides: 
-          - db_type: "decimal"
+          # - go_type: "database/sql.NullInt64"
+          #   db_type: "pg_catalog.int4"
+          #   "nullable": true
+          - db_type: "pg_catalog.numeric"
             go_type: "float64"
+          - db_type: "pg_catalog.int2"
+            go_type: "int32"
+      

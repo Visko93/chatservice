@@ -11,18 +11,18 @@ import (
 type Chat struct {
 	ID               string
 	UserID           string
-	InitialMessage   string
+	InitialMessageID string
 	Status           string
-	TokenUsage       int16
+	TokenUsage       int32
 	Model            string
-	ModelMaxTokens   int16
-	Temperature      string
-	TopP             string
-	N                int16
+	ModelMaxTokens   int32
+	Temperature      float64
+	TopP             float64
+	N                int32
 	Stop             string
-	MaxTokens        int16
-	PresencePenalty  string
-	FrequencyPenalty string
+	MaxTokens        int32
+	PresencePenalty  float64
+	FrequencyPenalty float64
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }
@@ -32,9 +32,9 @@ type Message struct {
 	ChatID    string
 	Role      string
 	Content   string
-	Tokens    int16
+	Tokens    int32
 	Model     string
 	Erased    bool
-	OrderMsg  int16
+	OrderMsg  int32
 	CreatedAt time.Time
 }
