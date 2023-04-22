@@ -7,4 +7,7 @@ migrate:
 migratedown:
 	migrate -database "postgresql://root:root@localhost:5432/chat_test?sslmode=disable" -path sql/migrations -verbose drop
 
-.PHONY: migrate migratedown createmigration
+grpc:
+	protoc --go_out=. --go-grpc_out=. proto/chat.proto --experimental_allow_proto3_optional
+
+.PHONY: migrate createmigration migratedown grpc

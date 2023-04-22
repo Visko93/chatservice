@@ -6,3 +6,26 @@ Authorization: 123456
  "user_id": "1",
  "user_message": "Hi what's your name?"
 }
+
+###
+
+POST http://localhost:8080/chat HTTP/1.1
+Content-Type: application/json
+Authorization: 123456
+
+{
+  "chat_id": "b421e6cf-ecab-4052-b6ce-f8b4bcee87f7",
+  "user_id": "1",
+  "user_message": "My pacient name is John Doe, he have slight fever and cough" 
+}
+
+###
+POST http://localhost:8080/chat HTTP/1.1
+Content-Type: application/json
+Authorization: 123456
+
+{
+  "chat_id": "b421e6cf-ecab-4052-b6ce-f8b4bcee87f7",
+  "user_id": "1",
+  "user_message": "Hi Beth,If the patient is having fever and cough, with a small episode allucinations, can I give any medicine to calm him down?" 
+}  
