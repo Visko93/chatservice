@@ -15,44 +15,50 @@ type ChatRepositoryPostgres struct {
 	Queries *db.Queries
 }
 
-func NewChatRepositoryPostgres(db_transaction *sql.DB) *ChatRepositoryPostgres {
+func NewChatRepositoryPostgres(dbt *sql.DB) *ChatRepositoryPostgres {
 	return &ChatRepositoryPostgres{
-		DB:      db_transaction,
-		Queries: db.New(db_transaction),
+		DB:      dbt,
+		Queries: db.New(dbt),
 	}
 }
 
 func (r *ChatRepositoryPostgres) CreateChat(ctx context.Context, chat *entity.Chat) error {
-	err := r.Queries.CreateChat(ctx, db.CreateChatParams{
-		ID:               chat.ID,
-		UserID:           chat.UserID,
-		InitialMessageID: chat.InitialSystemMessage.Content,
-		Status:           chat.Status,
-		Model:            chat.Config.Model.Name,
-		ModelMaxTokens:   int32(chat.Config.Model.MaxTokens),
-		TokenUsage:       int32(chat.TokenUsage),
-		Temperature:      float64(chat.Config.Temperature),
-		TopP:             float64(chat.Config.TopP),
-		N:                int32(chat.Config.N),
-		Stop:             chat.Config.Stop[0],
-		MaxTokens:        int32(chat.Config.MaxTokens),
-		PresencePenalty:  float64(chat.Config.PresencePenalty),
-		FrequencyPenalty: float64(chat.Config.FrequencyPenalty),
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
-	})
+	err := r.Queries.CreateChat(
+		ctx,
+		db.CreateChatParams{
+			ID:               chat.ID,
+			UserID:           chat.UserID,
+			InitialMessageID: chat.InitialSystemMessage.Content,
+			Status:           chat.Status,
+			TokenUsage:       int32(chat.TokenUsage),
+			Model:            chat.Config.Model.Name,
+			ModelMaxTokens:   int32(chat.Config.Model.MaxTokens),
+			Temperature:      float64(chat.Config.Temperature),
+			TopP:             float64(chat.Config.TopP),
+			N:                int32(chat.Config.N),
+			Stop:             chat.Config.Stop[0],
+			MaxTokens:        int32(chat.Config.MaxTokens),
+			PresencePenalty:  float64(chat.Config.PresencePenalty),
+			FrequencyPenalty: float64(chat.Config.FrequencyPenalty),
+			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	err = r.Queries.AddMessage(ctx, db.AddMessageParams{
-		ID:        chat.InitialSystemMessage.ID,
-		ChatID:    chat.ID,
-		Content:   chat.InitialSystemMessage.Content,
-		Role:      chat.InitialSystemMessage.Role,
-		Tokens:    int32(chat.InitialSystemMessage.Tokens),
-		CreatedAt: chat.InitialSystemMessage.CreatedAt,
-	})
+	err = r.Queries.AddMessage(
+		ctx,
+		db.AddMessageParams{
+			ID:        chat.InitialSystemMessage.ID,
+			ChatID:    chat.ID,
+			Content:   chat.InitialSystemMessage.Content,
+			Role:      chat.InitialSystemMessage.Role,
+			Tokens:    int32(chat.InitialSystemMessage.Tokens),
+			CreatedAt: chat.InitialSystemMessage.CreatedAt,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -60,10 +66,9 @@ func (r *ChatRepositoryPostgres) CreateChat(ctx context.Context, chat *entity.Ch
 	return nil
 }
 
-func (r *ChatRepositoryPostgres) FindChatByID(ctx context.Context, chatId string) (*entity.Chat, error) {
+func (r *ChatRepositoryPostgres) FindChatByID(ctx context.Context, chatID string) (*entity.Chat, error) {
 	chat := &entity.Chat{}
-
-	res, err := r.Queries.FindChatByID(ctx, chatId)
+	res, err := r.Queries.FindChatByID(ctx, chatID)
 	if err != nil {
 		return nil, errors.New("chat not found")
 	}
@@ -85,10 +90,11 @@ func (r *ChatRepositoryPostgres) FindChatByID(ctx context.Context, chatId string
 		FrequencyPenalty: float32(res.FrequencyPenalty),
 	}
 
-	messages, err := r.Queries.FindMessagesByChatID(ctx, chatId)
+	messages, err := r.Queries.FindMessagesByChatID(ctx, chatID)
 	if err != nil {
 		return nil, err
 	}
+
 	for _, message := range messages {
 		chat.Messages = append(chat.Messages, &entity.Message{
 			ID:        message.ID,
@@ -100,7 +106,7 @@ func (r *ChatRepositoryPostgres) FindChatByID(ctx context.Context, chatId string
 		})
 	}
 
-	erasedMessages, err := r.Queries.FindErasedMessagesByChatID(ctx, chatId)
+	erasedMessages, err := r.Queries.FindErasedMessagesByChatID(ctx, chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +120,6 @@ func (r *ChatRepositoryPostgres) FindChatByID(ctx context.Context, chatId string
 			CreatedAt: message.CreatedAt,
 		})
 	}
-
 	return chat, nil
 }
 

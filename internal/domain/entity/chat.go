@@ -28,16 +28,16 @@ type Chat struct {
 	Config               *ChatConfig
 }
 
-func NewChat(userID string, InitialSystemMessage *Message, config *ChatConfig) (*Chat, error) {
+func NewChat(userID string, initialSystemMessage *Message, chatConfig *ChatConfig) (*Chat, error) {
 	chat := &Chat{
 		ID:                   uuid.New().String(),
 		UserID:               userID,
-		InitialSystemMessage: InitialSystemMessage,
+		InitialSystemMessage: initialSystemMessage,
 		Status:               "active",
-		Config:               config,
+		Config:               chatConfig,
 		TokenUsage:           0,
 	}
-	chat.AddMessage(InitialSystemMessage)
+	chat.AddMessage(initialSystemMessage)
 
 	if err := chat.Validate(); err != nil {
 		return nil, err
@@ -45,9 +45,23 @@ func NewChat(userID string, InitialSystemMessage *Message, config *ChatConfig) (
 	return chat, nil
 }
 
+func (c *Chat) Validate() error {
+	if c.UserID == "" {
+		return errors.New("user id is empty")
+	}
+	if c.Status != "active" && c.Status != "ended" {
+		return errors.New("invalid status")
+	}
+	if c.Config.Temperature < 0 || c.Config.Temperature > 2 {
+		return errors.New("invalid temperature")
+	}
+	// ... more validations for config
+	return nil
+}
+
 func (c *Chat) AddMessage(m *Message) error {
 	if c.Status == "ended" {
-		return errors.New("chat is ended")
+		return errors.New("chat is ended. no more messages allowed")
 	}
 	for {
 		if c.Config.Model.getMaxTokens() >= m.getQuantityTokens()+c.TokenUsage {
@@ -62,41 +76,16 @@ func (c *Chat) AddMessage(m *Message) error {
 	return nil
 }
 
-func (c *Chat) getMessages() []*Message {
+func (c *Chat) GetMessages() []*Message {
 	return c.Messages
 }
 
-func (c *Chat) countMessages() int {
+func (c *Chat) CountMessages() int {
 	return len(c.Messages)
 }
 
-func (c *Chat) endChat() {
+func (c *Chat) End() {
 	c.Status = "ended"
-}
-
-func (c *Chat) isEnded() bool {
-	return c.Status == "ended"
-}
-
-func (c *Chat) isStarted() bool {
-	return c.Status == "active"
-}
-
-func (c *Chat) startChat() {
-	c.Status = "active"
-}
-
-func (c *Chat) Validate() error {
-	if c.UserID == "" {
-		return errors.New("user id is empty")
-	}
-	if c.Status != "started" && c.Status != "ended" {
-		return errors.New("invalid status")
-	}
-	if c.Config.Temperature < 0.0 || c.Config.Temperature > 5.0 {
-		return errors.New("invalid temperature")
-	}
-	return nil
 }
 
 func (c *Chat) RefreshTokenUsage() {

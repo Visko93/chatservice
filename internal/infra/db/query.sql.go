@@ -11,7 +11,7 @@ import (
 )
 
 const addMessage = `-- name: AddMessage :exec
-INSERT INTO messages (id, chat_id, role, content, tokens, model, erased, order_msg, created_at) VALUES(?,?,?,?,?,?,?,?,?)
+INSERT INTO messages (id, chat_id, role, content, tokens, model, erased, order_msg, created_at) VALUES($1 ,$2 ,$3 ,$4 ,$5 ,$6 ,$7 ,$8 ,$9)
 `
 
 type AddMessageParams struct {
@@ -44,7 +44,7 @@ func (q *Queries) AddMessage(ctx context.Context, arg AddMessageParams) error {
 const createChat = `-- name: CreateChat :exec
 INSERT INTO chats 
     (id, user_id, initial_message_id, status, token_usage, model, model_max_tokens,temperature, top_p, n, stop, max_tokens, presence_penalty, frequency_penalty, created_at, updated_at)
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    VALUES($1 ,$2 ,$3 ,$4 ,$5 ,$6 ,$7 ,$8 ,$9 ,$10 ,$11 ,$12 ,$13 ,$14 ,$15 ,$16 )
 `
 
 type CreateChatParams struct {
@@ -89,7 +89,7 @@ func (q *Queries) CreateChat(ctx context.Context, arg CreateChatParams) error {
 }
 
 const deleteChatMessages = `-- name: DeleteChatMessages :exec
-DELETE FROM messages WHERE chat_id = ?
+DELETE FROM messages WHERE chat_id = $1
 `
 
 func (q *Queries) DeleteChatMessages(ctx context.Context, chatID string) error {
@@ -98,7 +98,7 @@ func (q *Queries) DeleteChatMessages(ctx context.Context, chatID string) error {
 }
 
 const deleteErasedChatMessages = `-- name: DeleteErasedChatMessages :exec
-DELETE FROM messages WHERE erased=1 and chat_id = ?
+DELETE FROM messages WHERE erased=TRUE and chat_id = $1
 `
 
 func (q *Queries) DeleteErasedChatMessages(ctx context.Context, chatID string) error {
@@ -107,7 +107,7 @@ func (q *Queries) DeleteErasedChatMessages(ctx context.Context, chatID string) e
 }
 
 const findChatByID = `-- name: FindChatByID :one
-SELECT id, user_id, initial_message_id, status, token_usage, model, model_max_tokens, temperature, top_p, n, stop, max_tokens, presence_penalty, frequency_penalty, created_at, updated_at FROM chats WHERE id = ?
+SELECT id, user_id, initial_message_id, status, token_usage, model, model_max_tokens, temperature, top_p, n, stop, max_tokens, presence_penalty, frequency_penalty, created_at, updated_at FROM chats WHERE id = $1
 `
 
 func (q *Queries) FindChatByID(ctx context.Context, id string) (Chat, error) {
@@ -135,7 +135,7 @@ func (q *Queries) FindChatByID(ctx context.Context, id string) (Chat, error) {
 }
 
 const findErasedMessagesByChatID = `-- name: FindErasedMessagesByChatID :many
-SELECT id, chat_id, role, content, tokens, model, erased, order_msg, created_at FROM messages WHERE erased=1 and chat_id = ? order by order_msg asc
+SELECT id, chat_id, role, content, tokens, model, erased, order_msg, created_at FROM messages WHERE erased=TRUE and chat_id = $1 order by order_msg asc
 `
 
 func (q *Queries) FindErasedMessagesByChatID(ctx context.Context, chatID string) ([]Message, error) {
@@ -172,7 +172,7 @@ func (q *Queries) FindErasedMessagesByChatID(ctx context.Context, chatID string)
 }
 
 const findMessagesByChatID = `-- name: FindMessagesByChatID :many
-SELECT id, chat_id, role, content, tokens, model, erased, order_msg, created_at FROM messages WHERE erased=0 and chat_id = ? order by order_msg asc
+SELECT id, chat_id, role, content, tokens, model, erased, order_msg, created_at FROM messages WHERE erased=FALSE and chat_id = $1 order by order_msg asc
 `
 
 func (q *Queries) FindMessagesByChatID(ctx context.Context, chatID string) ([]Message, error) {
@@ -209,10 +209,11 @@ func (q *Queries) FindMessagesByChatID(ctx context.Context, chatID string) ([]Me
 }
 
 const saveChat = `-- name: SaveChat :exec
-UPDATE chats SET user_id = ?, initial_message_id = ?, status = ?, token_usage = ?, model = ?, model_max_tokens=?, temperature = ?, top_p = ?, n = ?, stop = ?, max_tokens = ?, presence_penalty = ?, frequency_penalty = ?, updated_at = ? WHERE id = ?
+UPDATE chats SET user_id = $2, initial_message_id = $3, status = $4, token_usage = $5, model = $6, model_max_tokens = $7, temperature = $8, top_p = $9, n = $10, stop = $11, max_tokens = $12, presence_penalty = $13, frequency_penalty = $14, updated_at = $15 WHERE id = $1
 `
 
 type SaveChatParams struct {
+	ID               string
 	UserID           string
 	InitialMessageID string
 	Status           string
@@ -227,11 +228,11 @@ type SaveChatParams struct {
 	PresencePenalty  float64
 	FrequencyPenalty float64
 	UpdatedAt        time.Time
-	ID               string
 }
 
 func (q *Queries) SaveChat(ctx context.Context, arg SaveChatParams) error {
 	_, err := q.db.ExecContext(ctx, saveChat,
+		arg.ID,
 		arg.UserID,
 		arg.InitialMessageID,
 		arg.Status,
@@ -246,7 +247,6 @@ func (q *Queries) SaveChat(ctx context.Context, arg SaveChatParams) error {
 		arg.PresencePenalty,
 		arg.FrequencyPenalty,
 		arg.UpdatedAt,
-		arg.ID,
 	)
 	return err
 }
